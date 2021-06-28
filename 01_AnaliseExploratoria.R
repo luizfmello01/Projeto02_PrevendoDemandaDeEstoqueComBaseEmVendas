@@ -7,6 +7,7 @@ getwd()
 # Carregar pacotes
 library(data.table)
 library(moments)
+library(caret)
 
 # Carregar dataset
 vendas <- fread("Datasets/train.csv", header = TRUE,
