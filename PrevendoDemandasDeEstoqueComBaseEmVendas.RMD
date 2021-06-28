@@ -1,0 +1,133 @@
+---
+title: "Prevendo Demandas de Estoque com Base em Vendas"
+author: "Luiz Fernando Mello"
+date: "28/06/2021"
+output:
+  html_document: default
+---
+
+Definindo o local de trabalho
+
+```{r}
+setwd("C:/repos/Projeto02_PrevendoDemandaDeEstoqueComBaseEmVendas")
+```
+
+Carregar pacote e dataset utilizado no script
+
+```{r}
+library(data.table)
+library(moments)
+
+treino <- fread("Datasets/train.csv", header = TRUE,
+                   sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8")
+```
+
+O conjunto de dados carregado é muito grande, para não ter problemas com capacidade computacional posteriormente, vamos dividir o dataset.
+
+```{r}
+set.seed(357951)
+indexes <- sample.int(nrow(treino), 450000)
+treino_sample <- treino[indexes,]
+rm(treino)
+rm(indexes)
+```
+
+Visualizar as variáveis e tipos de dados do dataset.
+
+```{r}
+str(treino_sample)
+```
+
+Verificar se contem algum valor faltante
+
+```{r}
+any(is.na(treino_sample))
+```
+Resultado: Não contem nenhum valor faltante no dataset.
+
+
+## Análise de variáveis numéricas ###
+
+Definindo as variáveis numéricas do dataset
+```{r}
+variaveis_numericas <- c("Venta_uni_hoy", "Venta_hoy", 
+                         "Dev_uni_proxima", "Dev_proxima", "Demanda_uni_equil")
+```
+
+
+### Medidas de tendência central e dispersão das variáveis
+```{r}
+for( i in variaveis_numericas) {
+  cat(paste("Medidas da variável ", i, ":", "\n", sep = ""))
+  print(summary(treino_sample[[i]]))
+  cat(paste("Desvio padrão:", sd(treino_sample[[i]])))
+  cat("\n\n")
+  boxplot(treino_sample[[i]], main = paste("Variável", i))
+}
+```
+Resultado: Variáveis não estão em uma distribuição normal e contem muitos outliers 
+
+
+### Análise de correlação entre as variáveis
+```{r}
+cor(treino_sample$Venta_uni_hoy, treino_sample$Venta_hoy)
+```
+Resultado: As variáveis Venta, tem uma boa correlação positiva
+
+```{r}
+cor(treino_sample$Dev_uni_proxima, treino_sample$Dev_proxima)
+```
+Resultado: As variáveis Dev, tem uma boa correlação positiva
+
+```{r}
+cor(treino_sample$Venta_uni_hoy, treino_sample$Demanda_uni_equil)
+```
+Resultado: Variável venta_uni_hoy, tem uma forte correlação positiva com a variável target
+
+```{r}
+cor(treino_sample$Venta_hoy, treino_sample$Demanda_uni_equil)
+```
+Resultado: Variável venta_hoy, tem uma forte correlação positiva com a variável target
+
+```{r}
+cor(treino_sample$Dev_uni_proxima, treino_sample$Demanda_uni_equil)
+```
+Resultado: Variável dev_uni_proxima, tem uma pequena correlação positiva com a variável target
+
+```{r}
+cor(treino_sample$Dev_proxima, treino_sample$Demanda_uni_equil)
+```
+Resultado: Variável dev_proxima, tem uma pequena correlação positiva com a variável target
+
+
+### Análise de simetria das variáveis
+```{r}
+for(i in variaveis_numericas) {
+  cat(paste("Simetria da variável ", i, ":", "\n", sep = ""))
+  print(skewness(treino_sample[[i]]))
+  cat("\n")
+}
+```
+Resultado: Todas as variáveis numéricas do dataset são assimetrica positiva.
+
+
+### Análise de valores duplicados
+```{r}
+for(i in variaveis_numericas) {
+  cat(paste("Valores duplicados da variável ", i, ":", "\n", sep = ""))
+  print(sum(duplicated(treino_sample[[i]])))
+  cat("\n")
+}
+```
+
+
+### Identificando outliers de cada variável
+```{r}
+for(i in variaveis_numericas) {
+  cat(paste("Outliers da variável ", i, ":", "\n", sep = ""))
+  metrica = mean(treino_sample[[i]]) + (sd(treino_sample[[i]]) * 3)
+  print( nrow(subset(treino_sample, treino_sample[[i]] > metrica)) )
+  cat("\n")
+}
+```
+Resultado: O Dataset tem valores outliers
