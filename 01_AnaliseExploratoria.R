@@ -1,4 +1,4 @@
-## Parte 1: Análise exploratória de dados ##
+#### Parte 1: Análise exploratória de dados numéricos ####
 
 # Setar local de trabalho
 setwd("C:/repos/Projeto02_PrevendoDemandaDeEstoqueComBaseEmVendas")
@@ -6,6 +6,7 @@ getwd()
 
 # Carregar pacotes
 library(data.table)
+library(moments)
 
 # Carregar dataset
 treino <- fread("Datasets/train.csv", header = TRUE,
@@ -38,6 +39,7 @@ for( i in variaveis_numericas) {
   cat("\n\n")
   boxplot(treino_sample[[i]], main = paste("Variável", i))
 }
+rm(i)
 # Resultado: Variáveis não estão em uma distribuição normal e contem muitos outliers 
 
 
@@ -59,3 +61,32 @@ cor(treino_sample$Dev_uni_proxima, treino_sample$Demanda_uni_equil)
 
 cor(treino_sample$Dev_proxima, treino_sample$Demanda_uni_equil)
 # Resultado: Variável dev_proxima, tem uma pequena correlação positiva com a variável target
+
+
+# Análise de simetria das variáveis
+for(i in variaveis_numericas) {
+  cat(paste("Simetria da variável ", i, ":", "\n", sep = ""))
+  print(skewness(treino_sample[[i]]))
+  cat("\n")
+}
+rm(i)
+# Resultado: Todas as variáveis numéricas do dataset são assimetrica positiva.
+
+
+# Análise de valores duplicados
+for(i in variaveis_numericas) {
+  cat(paste("Valores duplicados da variável ", i, ":", "\n", sep = ""))
+  print(sum(duplicated(treino_sample[[i]])))
+  cat("\n")
+}
+rm(i)
+
+treino_sample$Outlier <- NULL
+# Identificando outliers de cada variável
+for(i in variaveis_numericas) {
+  cat(paste("Outliers da variável ", i, ":", "\n", sep = ""))
+  metrica = mean(treino_sample[[i]]) + (sd(treino_sample[[i]]) * 3)
+  print( nrow(subset(treino_sample, treino_sample[[i]] > metrica)) )
+  cat("\n")
+}
+# O Dataset tem valores outliers
