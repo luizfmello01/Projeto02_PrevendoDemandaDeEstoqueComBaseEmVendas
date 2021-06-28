@@ -1,0 +1,14 @@
+Dicionário de dados:
+Semana -> Numero da semana
+Agencia_ID -> ID da agencia
+Canal_ID -> ID do canal de vendas
+Ruta_SAK -> ID da rota
+Cliente_ID -> ID do cliente
+NombreCliente -> Nome do cliente
+Producto_ID -> ID do produto
+NombreProducto -> Nome do produto
+Venta_uni_hoy -> Vendas esta semana (Unidade)
+Venta_hoy -> Vendas esta semana (Total de peso dos produtos)
+Dev_uni_proxima -> Vendas da semana que vem (Unidade)
+Dev_proxima -> Vendas da semana que vem (Total de peso dos produtos)
+Demanda_uni_equil -> Demanda (Variável target)
