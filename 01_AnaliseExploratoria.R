@@ -8,6 +8,8 @@ getwd()
 library(data.table)
 library(moments)
 library(caret)
+library(ggplot2)
+library(dplyr)
 
 # Carregar dataset
 vendas <- fread("Datasets/train.csv", header = TRUE,
