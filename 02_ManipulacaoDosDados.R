@@ -9,23 +9,6 @@ novos_nomes <- c("Semana", "Agencia_ID", "Canal_ID", "Rota_ID", "Cliente_ID",
 colnames(vendas) <- novos_nomes
 
 
-# Converter variáveis categóricas para fator
-to.factor <- function(dataframe, colunas) {
-  for( i in colunas  ) {
-    dataframe[[i]] <- as.factor(dataframe[[i]])
-  }
-  return(dataframe)
-}
-
-variaveis_categoricas <- c("Semana", "Agencia_ID", "Canal_ID", "Rota_ID",
-                           "Cliente_ID", "Produto_ID")
-vendas <- to.factor(vendas, variaveis_categoricas)
-
-
-# Visualizar tipo das variaveis do dataframe
-str(vendas)
-
-
 # Remover valores outliers
 vendas_alt <- vendas[!(vendas$ID %in% datasets_outliers$id), -"ID"]
 
