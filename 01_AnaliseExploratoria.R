@@ -81,7 +81,6 @@ for(i in variaveis_numericas) {
 }
 rm(i)
 
-treino_sample$Outlier <- NULL
 # Identificando outliers de cada variável
 for(i in variaveis_numericas) {
   cat(paste("Outliers da variável ", i, ":", "\n", sep = ""))
