@@ -6,6 +6,8 @@ output:
   html_document: default
 ---
 
+# Inicio do script e Análise Exploratória
+
 Definindo o local de trabalho
 
 ```{r}
@@ -18,7 +20,7 @@ Carregar pacote e dataset utilizado no script
 library(data.table)
 library(moments)
 
-treino <- fread("Datasets/train.csv", header = TRUE,
+vendas <- fread("Datasets/train.csv", header = TRUE,
                    sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8")
 ```
 
@@ -26,22 +28,27 @@ O conjunto de dados carregado é muito grande, para não ter problemas com capac
 
 ```{r}
 set.seed(357951)
-indexes <- sample.int(nrow(treino), 450000)
-treino_sample <- treino[indexes,]
-rm(treino)
+indexes <- sample.int(nrow(vendas), 500000)
+vendas <- vendas[indexes,]
 rm(indexes)
+```
+
+Adicionar variável ID para auxiliar na remoção de outliers posteriormente
+
+```{r}
+vendas$id <- 1:nrow(vendas)
 ```
 
 Visualizar as variáveis e tipos de dados do dataset.
 
 ```{r}
-str(treino_sample)
+str(vendas)
 ```
 
 Verificar se contem algum valor faltante
 
 ```{r}
-any(is.na(treino_sample))
+any(is.na(vendas))
 ```
 Resultado: Não contem nenhum valor faltante no dataset.
 
@@ -59,10 +66,10 @@ variaveis_numericas <- c("Venta_uni_hoy", "Venta_hoy",
 ```{r}
 for( i in variaveis_numericas) {
   cat(paste("Medidas da variável ", i, ":", "\n", sep = ""))
-  print(summary(treino_sample[[i]]))
-  cat(paste("Desvio padrão:", sd(treino_sample[[i]])))
+  print(summary(vendas[[i]]))
+  cat(paste("Desvio padrão:", sd(vendas[[i]])))
   cat("\n\n")
-  boxplot(treino_sample[[i]], main = paste("Variável", i))
+  boxplot(vendas[[i]], main = paste("Variável", i))
 }
 ```
 Resultado: Variáveis não estão em uma distribuição normal e contem muitos outliers 
@@ -70,32 +77,32 @@ Resultado: Variáveis não estão em uma distribuição normal e contem muitos o
 
 ### Análise de correlação entre as variáveis
 ```{r}
-cor(treino_sample$Venta_uni_hoy, treino_sample$Venta_hoy)
+cor(vendas$Venta_uni_hoy, vendas$Venta_hoy)
 ```
 Resultado: As variáveis Venta, tem uma boa correlação positiva
 
 ```{r}
-cor(treino_sample$Dev_uni_proxima, treino_sample$Dev_proxima)
+cor(vendas$Dev_uni_proxima, vendas$Dev_proxima)
 ```
 Resultado: As variáveis Dev, tem uma boa correlação positiva
 
 ```{r}
-cor(treino_sample$Venta_uni_hoy, treino_sample$Demanda_uni_equil)
+cor(vendas$Venta_uni_hoy, vendas$Demanda_uni_equil)
 ```
 Resultado: Variável venta_uni_hoy, tem uma forte correlação positiva com a variável target
 
 ```{r}
-cor(treino_sample$Venta_hoy, treino_sample$Demanda_uni_equil)
+cor(vendas$Venta_hoy, vendas$Demanda_uni_equil)
 ```
 Resultado: Variável venta_hoy, tem uma forte correlação positiva com a variável target
 
 ```{r}
-cor(treino_sample$Dev_uni_proxima, treino_sample$Demanda_uni_equil)
+cor(vendas$Dev_uni_proxima, vendas$Demanda_uni_equil)
 ```
 Resultado: Variável dev_uni_proxima, tem uma pequena correlação positiva com a variável target
 
 ```{r}
-cor(treino_sample$Dev_proxima, treino_sample$Demanda_uni_equil)
+cor(vendas$Dev_proxima, vendas$Demanda_uni_equil)
 ```
 Resultado: Variável dev_proxima, tem uma pequena correlação positiva com a variável target
 
@@ -104,7 +111,7 @@ Resultado: Variável dev_proxima, tem uma pequena correlação positiva com a va
 ```{r}
 for(i in variaveis_numericas) {
   cat(paste("Simetria da variável ", i, ":", "\n", sep = ""))
-  print(skewness(treino_sample[[i]]))
+  print(skewness(vendas[[i]]))
   cat("\n")
 }
 ```
@@ -115,7 +122,7 @@ Resultado: Todas as variáveis numéricas do dataset são assimetrica positiva.
 ```{r}
 for(i in variaveis_numericas) {
   cat(paste("Valores duplicados da variável ", i, ":", "\n", sep = ""))
-  print(sum(duplicated(treino_sample[[i]])))
+  print(sum(duplicated(vendas[[i]])))
   cat("\n")
 }
 ```
@@ -123,11 +130,23 @@ for(i in variaveis_numericas) {
 
 ### Identificando outliers de cada variável
 ```{r}
+datasets_outliers <- data.frame()
 for(i in variaveis_numericas) {
   cat(paste("Outliers da variável ", i, ":", "\n", sep = ""))
-  metrica = mean(treino_sample[[i]]) + (sd(treino_sample[[i]]) * 3)
-  print( nrow(subset(treino_sample, treino_sample[[i]] > metrica)) )
+  metrica = mean(vendas[[i]]) + (sd(vendas[[i]]) * 2)
+  dataset <- subset(vendas, vendas[[i]] > metrica)
+  datasets_outliers <- rbind(datasets_outliers, dataset)
+  print( nrow(dataset) )
+  datasets_outliers <- unique(datasets_outliers)
+  rm(dataset)
+  rm(metrica)
   cat("\n")
 }
+rm(i)
 ```
-Resultado: O Dataset tem valores outliers
+
+#### Porcentagem de outliers dentro do dataset
+```{r}
+print( paste("O dataset tem ", round((nrow(datasets_outliers)/nrow(vendas)*100), 2), "% de outliers", sep = "" ))
+```
+Resultado: Os valores outliers estão no dataframe "datasets_outliers", vai ser utilizado para remover os outliers na manipulação de dados.
