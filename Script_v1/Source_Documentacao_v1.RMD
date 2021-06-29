@@ -1,0 +1,268 @@
+---
+title: "Prevendo Demandas de Estoque com Base em Vendas"
+author: "Luiz Fernando Mello"
+date: "28/06/2021"
+output:
+  html_document: default
+---
+
+# Inicio do script e Análise Exploratória
+
+Definindo o local de trabalho
+
+```{r}
+setwd("C:/repos/Projeto02_PrevendoDemandaDeEstoqueComBaseEmVendas")
+```
+
+Carregar pacote e dataset utilizado no script
+
+```{r}
+library(data.table)
+library(moments)
+library(caret)
+library(ggplot2)
+library(dplyr)
+
+vendas <- fread("Datasets/train.csv", header = TRUE,
+                   sep = ",", stringsAsFactors = FALSE, encoding = "UTF-8")
+```
+
+O conjunto de dados carregado é muito grande, para não ter problemas com capacidade computacional posteriormente, vamos dividir o dataset.
+
+```{r}
+set.seed(357951)
+indexes <- sample.int(nrow(vendas), 500000)
+vendas <- vendas[indexes,]
+rm(indexes)
+```
+
+Adicionar variável ID para auxiliar na remoção de outliers posteriormente
+
+```{r}
+vendas$id <- 1:nrow(vendas)
+```
+
+Visualizar as variáveis e tipos de dados do dataset.
+
+```{r}
+str(vendas)
+```
+
+Verificar se contem algum valor faltante
+
+```{r}
+any(is.na(vendas))
+```
+Resultado: Não contem nenhum valor faltante no dataset.
+
+
+## Análise de variáveis numéricas ###
+
+Definindo as variáveis numéricas do dataset
+```{r}
+variaveis_numericas <- c("Venta_uni_hoy", "Venta_hoy", 
+                         "Dev_uni_proxima", "Dev_proxima", "Demanda_uni_equil")
+```
+
+
+### Medidas de tendência central e dispersão das variáveis
+```{r}
+for( i in variaveis_numericas) {
+  cat(paste("Medidas da variável ", i, ":", "\n", sep = ""))
+  print(summary(vendas[[i]]))
+  cat(paste("Desvio padrão:", sd(vendas[[i]])))
+  cat("\n\n")
+  boxplot(vendas[[i]], main = paste("Variável", i))
+}
+```
+Resultado: Variáveis não estão em uma distribuição normal e contem muitos outliers 
+
+
+### Análise de correlação entre as variáveis
+```{r}
+cor(vendas$Venta_uni_hoy, vendas$Venta_hoy)
+```
+Resultado: As variáveis Venta, tem uma boa correlação positiva
+
+```{r}
+cor(vendas$Dev_uni_proxima, vendas$Dev_proxima)
+```
+Resultado: As variáveis Dev, tem uma boa correlação positiva
+
+```{r}
+cor(vendas$Venta_uni_hoy, vendas$Demanda_uni_equil)
+```
+Resultado: Variável venta_uni_hoy, tem uma forte correlação positiva com a variável target
+
+```{r}
+cor(vendas$Venta_hoy, vendas$Demanda_uni_equil)
+```
+Resultado: Variável venta_hoy, tem uma forte correlação positiva com a variável target
+
+```{r}
+cor(vendas$Dev_uni_proxima, vendas$Demanda_uni_equil)
+```
+Resultado: Variável dev_uni_proxima, tem uma pequena correlação positiva com a variável target
+
+```{r}
+cor(vendas$Dev_proxima, vendas$Demanda_uni_equil)
+```
+Resultado: Variável dev_proxima, tem uma pequena correlação positiva com a variável target
+
+
+### Análise de simetria das variáveis
+```{r}
+for(i in variaveis_numericas) {
+  cat(paste("Simetria da variável ", i, ":", "\n", sep = ""))
+  print(skewness(vendas[[i]]))
+  cat("\n")
+}
+```
+Resultado: Todas as variáveis numéricas do dataset são assimetrica positiva.
+
+
+### Análise de valores duplicados
+```{r}
+for(i in variaveis_numericas) {
+  cat(paste("Valores duplicados da variável ", i, ":", "\n", sep = ""))
+  print(sum(duplicated(vendas[[i]])))
+  cat("\n")
+}
+```
+
+
+### Identificando outliers de cada variável
+```{r}
+datasets_outliers <- data.frame()
+for(i in variaveis_numericas) {
+  cat(paste("Outliers da variável ", i, ":", "\n", sep = ""))
+  metrica = mean(vendas[[i]]) + (sd(vendas[[i]]) * 2)
+  dataset <- subset(vendas, vendas[[i]] > metrica)
+  datasets_outliers <- rbind(datasets_outliers, dataset)
+  print( nrow(dataset) )
+  datasets_outliers <- unique(datasets_outliers)
+  rm(dataset)
+  rm(metrica)
+  cat("\n")
+}
+rm(i)
+```
+
+#### Porcentagem de outliers dentro do dataset
+```{r}
+print( paste("O dataset tem ", round((nrow(datasets_outliers)/nrow(vendas)*100), 2), "% de outliers", sep = "" ))
+```
+Resultado: Os valores outliers estão no dataframe "datasets_outliers", vai ser utilizado para remover os outliers na manipulação de dados.
+
+
+# Manipulação dos dados
+
+### Alterar o nome das variáveis
+```{r}
+novos_nomes <- c("Semana", "Agencia_ID", "Canal_ID", "Rota_ID", "Cliente_ID",
+                 "Produto_ID", "Quantidade_Vendida_Esta_Semana", "Peso_Vendido_Esta_Semana",
+                 "Devolucao_Unid_Proxima_Semana", "Devolucao_Peso_Proxima_Semana",
+                 "Demanda_Estoque", "ID")
+
+colnames(vendas) <- novos_nomes
+```
+
+
+### Remover valores outliers
+```{r}
+vendas_alt <- vendas[!(vendas$ID %in% datasets_outliers$id), -"ID"]
+```
+
+
+### Verificar sumário da variável target
+```{r}
+summary(vendas_alt$Demanda_Estoque)
+```
+Resultado: A média da variável target, ficou mais próxima da mediana, já foram removidas os outliers
+
+
+### Separar dados de treino e de teste
+```{r}
+indexesTrain <- createDataPartition(vendas_alt$Agencia_ID, p = 0.7, list = FALSE)
+data.train <- vendas_alt[indexesTrain,]
+data.test <- vendas_alt[-indexesTrain,]
+```
+
+
+### Verificar se existe algum valor NA no dataframe
+```{r}
+any(is.na(vendas_alt))
+```
+Resultado: Não contem nenhum valor NA no dataframe.
+
+
+# Treinamento do modelo preditivo
+
+### Feature selection das variáveis mais importantes
+```{r}
+selecao_variaveis <- lm(Demanda_Estoque ~ ., 
+             data = data.train)
+
+varImp(selecao_variaveis)
+summary(selecao_variaveis)
+rm(selecao_variaveis)
+```
+Resultado: Variáveis com mais importancia para o modelo:
+Produto_ID, Quantidade_Vendida_Esta_Semana, Peso_Vendido_Esta_Semana, Quantidade_reservada_Proxima_Semana, Peso_Reservado_Proxima_Semana
+
+
+### Treinamento do modelo de regressão linear
+```{r}
+modelo <- train(Demanda_Estoque ~ Produto_ID
+                + Quantidade_Vendida_Esta_Semana
+                + Peso_Vendido_Esta_Semana
+                + Devolucao_Unid_Proxima_Semana
+                + Devolucao_Peso_Proxima_Semana,
+                data = data.train, method = "lm",
+                preProcess = c("center", "scale"))
+
+summary(modelo)
+```
+#### R-squared do modelo ficou com 99.97%
+
+
+# Avaliação do modelo preditivo
+
+### Previsoes do modelo com os dados de teste
+```{r}
+previsao <- as.integer(predict(modelo, data.test[, -"Demanda_Estoque"]))
+```
+
+
+### Criar dataframe com dados observados, previstos e residuo
+```{r}
+residuos <- data.frame(previsoes = previsao,
+                       valores_reais = data.test$Demanda_Estoque)
+
+residuos <- residuos %>%
+  mutate(residuo = valores_reais - previsoes)
+```
+
+
+### Sumário dos residuos e métricas do modelo
+```{r}
+print(summary(residuos$residuo))
+print(modelo$results)
+```
+
+
+### Gráfico com dados observados e previstos
+```{r}
+axisRange <- extendrange(c(residuos$valores_reais, residuos$previsoes))
+plot(residuos$valores_reais, residuos$previsoes, 
+     ylim = axisRange, xlim = axisRange,
+     xlab = "Valores reais", ylab = "Valores previstos",
+     main = "Valores reais x Previsoes")
+abline(0, 1, col = "red", lty = 2)
+```
+
+
+### Salvar modelo preditivo na pasta
+```{r}
+saveRDS(modelo, "Modelo/Modelo_v1.rds")
+```
