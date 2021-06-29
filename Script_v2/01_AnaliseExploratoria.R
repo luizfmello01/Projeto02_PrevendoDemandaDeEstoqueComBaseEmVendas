@@ -19,6 +19,7 @@ dados <- fread("../Datasets/train.csv", header = TRUE, sep = ",",
 
 
 # O dataset carregado é muito grande, Realizar split no dataset
+set.seed(357123)
 indexSplit <- sample.int(nrow(dados), 200000)
 vendas <- dados[indexSplit,]
 
@@ -57,9 +58,17 @@ vendas_semana <- vendas %>%
 # Exibir tabela com os dados sumarizados por semana
 print(vendas_semana)
 
-# Plot de cada variável numérica por semana
+# Gráfico de cada variável numérica por semana
 for(i in  var.numericas) {
   plot(ggplot(vendas_semana, aes(Semana, .data[[i]])) +
          geom_line() + 
          ggtitle(paste(i, "por Semana")))
 }
+# Conclusão: 
+# A semana com mais Unidades vendidas é a semana 4
+# A semana com mais Pesos vendidos é a semana 8
+# A semana com mais Unidades devolvidas é a semana 7
+# A semana com mais Pesos devolvidos é a semana 7
+# A semana com mais Demanda de estoque é a semana 4
+
+# A semana 4 teve mais produtos vendidos que as demais e uma das que menos teve devoluções.
