@@ -26,12 +26,16 @@ indexSplit <- sample.int(nrow(dados), 200000)
 vendas <- dados[indexSplit,]
 
 
-# Remover variáveis que não vai ser utilizadas
+# Remover variáveis que não vão ser utilizadas
 rm(dados, indexSplit)
 
 
 # Visualizar dados
 str(vendas)
+
+
+# Verificar se existe valores NA
+any(is.na(vendas))
 
 
 # Renomear as variáveis do dataset
@@ -52,10 +56,10 @@ for(i in var.categoricas) {
 
 
 # Declarando as variáveis numéricas
-var_numericas <- c(character(0))
+var.numericas <- c(character(0))
 for(i in colnames(vendas)) {
   if(is.numeric(vendas[[i]])) {
-    var_numericas <- append(var.numericas, i)
+    var.numericas <- append(var.numericas, i)
   }
 }
 
@@ -187,10 +191,10 @@ vendas_cliente <- vendas %>%
             Peso_Devolucao = sum(Peso_Devolucao), 
             Demanda_Estoque = sum(Demanda_Estoque))
 
-# Exibir tabela com os dados sumarizados por produto
+# Exibir tabela com os dados sumarizados por cliente
 print(vendas_cliente)
 
-# Gráfico de cada variável numérica por produto
+# Gráfico de cada variável numérica por cliente
 for(i in var.numericas) {
   # Ordenar o dataframe em ordem decrescente com a variável que está sendo 
   # iterada e pegar os 10 primeiros
@@ -199,4 +203,4 @@ for(i in var.numericas) {
          geom_bar(stat = "identity") +
          ggtitle(paste("Top 10 clientes com mais", i)))
 }
-# Conclusão: TO-DO
+# Conclusão: 653378 é o cliente que mais comprou e devolveu produtos.
