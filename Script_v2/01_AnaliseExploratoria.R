@@ -116,7 +116,7 @@ vendas_semana <- vendas %>%
             Unidade_Vendida = sum(Unidade_Vendida),
             Peso_Vendido = sum(Peso_Vendido),
             Peso_Devolucao = sum(Peso_Devolucao),
-            Demanda_Estoque = sum(Demanda_Estoque)) %>%
+            Demanda_Estoque = sum(Demanda_Estoque))
 
 # Exibir tabela com os dados sumarizados por semana
 print(vendas_semana)
