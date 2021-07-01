@@ -1,5 +1,5 @@
 ---
-title: "Prevendo Demandas de Estoque com Base em Vendas (v2)"
+title: "Prevendo Demandas de Estoque com Base em Vendas"
 author: "Luiz Fernando Mello"
 date: "29/06/2021"
 output: html_document
@@ -13,7 +13,7 @@ setwd("C:/repos/Projeto02_PrevendoDemandaDeEstoqueComBaseEmVendas/Script_v2")
 ```
 
 ## Carregar bibliotecas
-```{r ECHO=FALSE}
+```{r results='hide'}
 library(data.table)
 library(dplyr)
 library(ggplot2)
@@ -107,7 +107,8 @@ for(i in var.numericas) {
        xlab = i)
 }
 ```
-Conclusão: Analisando as frequencias, as variáveis não estão em uma distribuição normal parece que temos muitos outliers, vamos verificar melhor com boxplot.
+
+##### Conclusão: Analisando as frequencias, as variáveis não estão em uma distribuição normal parece que temos muitos outliers, vamos verificar melhor com boxplot.
 
 ## Boxplots
 ```{r}
@@ -117,13 +118,14 @@ for(i in var.numericas) {
        xlab = i)
 }
 ```
-Conclusão: Muitos outliers em nossas variáveis.
+
+##### Conclusão: Muitos outliers em nossas variáveis.
 
 ## Análise de correlação (Plot de correlação das variáveis)
 ```{r}
 corrplot(cor(select(vendas, var.numericas)), method = "color")
 ```
-Conclusão: As variáveis que tem mais correlação com a variavel target (Demanda_Estoque) é Unidade_Vendida e Peso_Vendido
+##### Conclusão: As variáveis que tem mais correlação com a variavel target (Demanda_Estoque) é Unidade_Vendida e Peso_Vendido
 
 
 # Análisando os dados por semana
@@ -136,7 +138,7 @@ vendas_semana <- vendas %>%
             Unidade_Vendida = sum(Unidade_Vendida),
             Peso_Vendido = sum(Peso_Vendido),
             Peso_Devolucao = sum(Peso_Devolucao),
-            Demanda_Estoque = sum(Demanda_Estoque)) %>%
+            Demanda_Estoque = sum(Demanda_Estoque))
 ```
 
 ## Tabela de dados sumarizados por semana
@@ -154,13 +156,14 @@ for(i in var.numericas) {
       xlab("Semana"))
 }
 ```
-#### Conclusão: 
-#### A semana com mais Unidades vendidas é a semana 4
-#### A semana com mais Pesos vendidos é a semana 8
-#### A semana com mais Unidades devolvidas é a semana 7
-#### A semana com mais Pesos devolvidos é a semana 7
-#### A semana com mais Demanda de estoque é a semana 4
-### A semana 4 teve mais produtos vendidos que as demais e uma das que menos teve devoluções.
+
+##### Conclusão: 
+##### A semana com mais Unidades vendidas é a semana 4
+##### A semana com mais Pesos vendidos é a semana 8
+##### A semana com mais Unidades devolvidas é a semana 7
+##### A semana com mais Pesos devolvidos é a semana 7
+##### A semana com mais Demanda de estoque é a semana 4
+##### A semana 4 teve mais produtos vendidos que as demais e uma das que menos teve devoluções.
 
 
 # Análisando os dados por produto
@@ -194,13 +197,14 @@ for(i in var.numericas) {
     ggtitle(paste("Top 10 produtos com mais", i)))
 }
 ```
-#### Conclusão:
-#### Produto 2425 com mais unidades vendidas
-#### Produto 2233 com mais peso vendido
-#### Produto 36610 com mais unidades devolvidas
-#### Produto 2233 com mais peso devolvido
-#### Produto 2425 com mais demanda de estoque
-### Podemos concluir que o produto 2425 é o mais vendido, o produto 2233 é produto que é mais vendido por peso, porém é o mais devolvido tambem e o produto 36610 é o que tem mais unidades devolvidas e um dos menos vendidos.
+
+##### Conclusão:
+##### Produto 2425 com mais unidades vendidas
+##### Produto 2233 com mais peso vendido
+##### Produto 36610 com mais unidades devolvidas
+##### Produto 2233 com mais peso devolvido
+##### Produto 2425 com mais demanda de estoque
+##### Podemos concluir que o produto 2425 é o mais vendido, o produto 2233 é produto que é mais vendido por peso, porém é o mais devolvido tambem e o produto 36610 é o que tem mais unidades devolvidas e um dos menos vendidos.
 
 
 # Análisando os dados por cliente
@@ -234,4 +238,5 @@ for(i in var.numericas) {
          ggtitle(paste("Top 10 clientes com mais", i)))
 }
 ```
-### Conclusão: 653378 é o cliente que mais comprou e devolveu produtos.
+
+##### Conclusão: 653378 é o cliente que mais comprou e devolveu produtos.
