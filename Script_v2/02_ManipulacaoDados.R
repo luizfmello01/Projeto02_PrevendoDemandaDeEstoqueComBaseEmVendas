@@ -3,13 +3,20 @@
 
 # Remover valores outliers das variáveis numéricas
 for(i in var.numericas) {
-  qnt <- quantile(vendas[[i]], probs = c(.25, .75), na.rm = TRUE)
-  H <- 1.5 * IQR(vendas[[i]], na.rm = TRUE)
-  vendas[vendas[[i]] < (qnt[1] - H)] <- NA
-  vendas[vendas[[i]] > (qnt[2] + H)] <- NA
+  maiorOutlier <- mean(vendas[[i]]) + (sd(vendas[[i]]) * 2)
+  menorOutlier <- mean(vendas[[i]]) - (sd(vendas[[i]]) * 2)
+  vendas[[i]][vendas[[i]] < menorOutlier] <- NA
+  vendas[[i]][vendas[[i]] > maiorOutlier] <- NA
 }
 
 vendas <- na.omit(vendas)
+
+
+# Transformar variáveis categóricas para numericas novamente
+# Motivo: Modelo fica muito pesado com variáveis fatores
+for(i in var.categoricas) {
+  vendas[[i]] <- as.integer(vendas[[i]])
+}
 
 
 # Dividir os dados de treino e de teste
