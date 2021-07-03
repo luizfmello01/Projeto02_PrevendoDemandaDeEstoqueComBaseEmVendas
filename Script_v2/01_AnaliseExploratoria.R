@@ -22,7 +22,7 @@ dados <- fread("../Datasets/train.csv", header = TRUE, sep = ",",
 
 # O dataset carregado é muito grande, Realizar split no dataset
 set.seed(357123)
-indexSplit <- sample.int(nrow(dados), 200000)
+indexSplit <- sample.int(nrow(dados), 600000)
 vendas <- dados[indexSplit,]
 
 
@@ -204,3 +204,7 @@ for(i in var.numericas) {
          ggtitle(paste("Top 10 clientes com mais", i)))
 }
 # Conclusão: 653378 é o cliente que mais comprou e devolveu produtos.
+
+
+# Remover variáveis que foram declaradas para fazer as análises
+rm(vendas_cliente, vendas_produto, vendas_semana)
